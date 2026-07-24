@@ -112,15 +112,22 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\LibroController.cs" />
     <Compile Include="Controllers\PrestamoController.cs" />
+    <Compile Include="Controllers\UsuarioController.cs" />
     <Compile Include="Data\LibroDAO.cs" />
     <Compile Include="Data\PrestamoDAO.cs" />
+    <Compile Include="Data\UsuarioDAO.cs" />
+    <Compile Include="Filters\AutorizarAttribute.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Handlers\PreflightRequestsHandler.cs" />
     <Compile Include="Models\Libro.cs" />
+    <Compile Include="Models\LoginRequest.cs" />
     <Compile Include="Models\prestamos.cs" />
+    <Compile Include="Models\Usuario.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Security\PasswordHelper.cs" />
+    <Compile Include="Security\TokenHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
