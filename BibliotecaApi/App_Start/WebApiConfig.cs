@@ -1,0 +1,37 @@
+﻿using BibliotecaApi.Handlers;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web.Http;
+using System.Web.Http.Cors;
+
+namespace BibliotecaApi
+{
+    public static class WebApiConfig
+    {
+        public static void Register(HttpConfiguration config)
+        {
+            // Configurar CORS
+            var cors = new EnableCorsAttribute("*", "*", "*");
+            config.EnableCors(cors);
+
+            config.MessageHandlers.Add(new PreflightRequestsHandler());
+
+            // Configuración y servicios de Web API
+
+            // Rutas de Web API
+            config.MapHttpAttributeRoutes();
+
+            config.Routes.MapHttpRoute(
+                name: "DefaultApi",
+                routeTemplate: "api/{controller}/{id}",
+                defaults: new { id = RouteParameter.Optional }
+            );
+
+            // Configurar para que la API regrese JSON por defecto
+            var jsonFormatter = config.Formatters.JsonFormatter;
+            config.Formatters.Clear();
+            config.Formatters.Add(jsonFormatter);
+        }
+    }
+}
