@@ -13,16 +13,16 @@ namespace BibliotecaApi.Controllers
     {
         PrestamoDAO dao = new PrestamoDAO();
 
-        // GET api/prestamo -> cualquier usuario autenticado
-        public IEnumerable<Prestamo> Get()
+        // GET api/prestamo -> cualquier usuario autenticado (incluye datos del libro y del usuario)
+        public IEnumerable<PrestamoDetalle> Get()
         {
-            return dao.GetAll();
+            return dao.GetAllDetalle();
         }
 
         // GET api/prestamo/{id}
         public IHttpActionResult Get(int id)
         {
-            var p = dao.GetById(id);
+            var p = dao.GetByIdDetalle(id);
             if (p == null) return NotFound();
             return Ok(p);
         }
@@ -37,7 +37,7 @@ namespace BibliotecaApi.Controllers
             try
             {
                 int id = dao.Prestar(prestamo);
-                return Created(Request.RequestUri + "/" + id, dao.GetById(id));
+                return Created(Request.RequestUri + "/" + id, dao.GetByIdDetalle(id));
             }
             catch (ReglaNegocioException ex)
             {
@@ -54,7 +54,7 @@ namespace BibliotecaApi.Controllers
             try
             {
                 dao.Devolver(id);
-                return Ok(dao.GetById(id));
+                return Ok(dao.GetByIdDetalle(id));
             }
             catch (ReglaNegocioException ex)
             {

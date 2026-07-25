@@ -254,10 +254,76 @@ namespace BibliotecaApi.Data
                 id = (int)reader["id"],
                 libroId = (int)reader["libroId"],
                 usuarioId = (int)reader["usuarioId"],
-                fechaPrestamo = reader["fechaPrestamo"].ToString(),
-                fechaLimite = reader["fechaLimite"].ToString(),
-                fechaDevolucion = reader["fechaDevolucion"] == DBNull.Value ? null : reader["fechaDevolucion"].ToString(),
+                fechaPrestamo = (DateTime)reader["fechaPrestamo"],
+                fechaLimite = (DateTime)reader["fechaLimite"],
+                fechaDevolucion = reader["fechaDevolucion"] == DBNull.Value ? (DateTime?)null : (DateTime)reader["fechaDevolucion"],
                 estado = reader["estado"].ToString()
+            };
+        }
+
+        // ---- Consultas con datos relacionados (JOIN) ----
+
+        private const string DetalleSelect =
+            "SELECT p.id, p.libroId, l.titulo AS libroTitulo, l.autor AS libroAutor, " +
+            "p.usuarioId, u.nombre AS usuarioNombre, u.correo AS usuarioCorreo, " +
+            "p.fechaPrestamo, p.fechaLimite, p.fechaDevolucion, p.estado " +
+            "FROM Prestamo p " +
+            "INNER JOIN Libro l ON l.id = p.libroId " +
+            "INNER JOIN Usuario u ON u.id = p.usuarioId";
+
+        public List<PrestamoDetalle> GetAllDetalle()
+        {
+            List<PrestamoDetalle> lista = new List<PrestamoDetalle>();
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(DetalleSelect + " ORDER BY p.id", conn))
+                {
+                    conn.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                            lista.Add(MapDetalle(reader));
+                    }
+                }
+            }
+            return lista;
+        }
+
+        public PrestamoDetalle GetByIdDetalle(int id)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(DetalleSelect + " WHERE p.id=@id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    conn.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read()) return MapDetalle(reader);
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static PrestamoDetalle MapDetalle(SqlDataReader reader)
+        {
+            var fechaLimite = (DateTime)reader["fechaLimite"];
+            var estado = reader["estado"].ToString();
+            return new PrestamoDetalle
+            {
+                id = (int)reader["id"],
+                libroId = (int)reader["libroId"],
+                libroTitulo = reader["libroTitulo"].ToString(),
+                libroAutor = reader["libroAutor"] == DBNull.Value ? null : reader["libroAutor"].ToString(),
+                usuarioId = (int)reader["usuarioId"],
+                usuarioNombre = reader["usuarioNombre"].ToString(),
+                usuarioCorreo = reader["usuarioCorreo"].ToString(),
+                fechaPrestamo = (DateTime)reader["fechaPrestamo"],
+                fechaLimite = fechaLimite,
+                fechaDevolucion = reader["fechaDevolucion"] == DBNull.Value ? (DateTime?)null : (DateTime)reader["fechaDevolucion"],
+                estado = estado,
+                vencido = string.Equals(estado, "Activo", StringComparison.OrdinalIgnoreCase) && fechaLimite < DateTime.Now
             };
         }
     }

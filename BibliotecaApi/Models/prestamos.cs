@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+using System;
 
 namespace BibliotecaApi.Models
 {
@@ -10,9 +7,9 @@ namespace BibliotecaApi.Models
         public int id { get; set; }
         public int libroId { get; set; }
         public int usuarioId { get; set; }
-        public string fechaPrestamo { get; set; }
-        public string fechaLimite { get; set; }
-        public string fechaDevolucion { get; set; }
+        public DateTime fechaPrestamo { get; set; }
+        public DateTime fechaLimite { get; set; }
+        public DateTime? fechaDevolucion { get; set; }
         public string estado { get; set; }
     }
 }
