@@ -1,4 +1,5 @@
-﻿using BibliotecaApi.Handlers;
+﻿using BibliotecaApi.Filters;
+using BibliotecaApi.Handlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,10 @@ namespace BibliotecaApi
             config.EnableCors(cors);
 
             config.MessageHandlers.Add(new PreflightRequestsHandler());
+
+            // Filtros globales: validación de modelo y manejo de errores no controlados
+            config.Filters.Add(new ManejadorErroresAttribute());
+            config.Filters.Add(new ValidarModeloAttribute());
 
             // Configuración y servicios de Web API
 

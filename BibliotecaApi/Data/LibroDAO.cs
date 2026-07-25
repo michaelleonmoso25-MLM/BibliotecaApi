@@ -1,10 +1,7 @@
-﻿using BibliotecaApi.Models;
-using System;
+using BibliotecaApi.Models;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Web;
 
 namespace BibliotecaApi.Data
 {
@@ -13,29 +10,22 @@ namespace BibliotecaApi.Data
         string connectionString =
             ConfigurationManager.ConnectionStrings["BibliotecaConnection"].ConnectionString;
 
+        private const string Columnas = "id, titulo, autor, isbn, categoria, portadaUrl, disponible";
+
         // GET ALL
         public List<Libro> GetAll()
         {
             List<Libro> lista = new List<Libro>();
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = "SELECT * FROM Libro";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-
-                while (reader.Read())
+                using (SqlCommand cmd = new SqlCommand($"SELECT {Columnas} FROM Libro", conn))
                 {
-                    lista.Add(new Libro()
+                    conn.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        id = (int)reader["id"],
-                        titulo = reader["titulo"].ToString(),
-                        autor = reader["autor"].ToString(),
-                        isbn = reader["isbn"].ToString(),
-                        categoria = reader["categoria"].ToString(),
-                        portadaUrl = reader["portadaUrl"].ToString(),
-                        disponible = (bool)reader["disponible"]
-                    });
+                        while (reader.Read())
+                            lista.Add(Map(reader));
+                    }
                 }
             }
             return lista;
@@ -44,82 +34,93 @@ namespace BibliotecaApi.Data
         // GET BY ID
         public Libro GetById(int id)
         {
-            Libro l = null;
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = "SELECT * FROM Libro WHERE id=@id";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@id", id);
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                if (reader.Read())
+                using (SqlCommand cmd = new SqlCommand($"SELECT {Columnas} FROM Libro WHERE id=@id", conn))
                 {
-                    l = new Libro()
+                    cmd.Parameters.AddWithValue("@id", id);
+                    conn.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        id = (int)reader["id"],
-                        titulo = reader["titulo"].ToString(),
-                        autor = reader["autor"].ToString(),
-                        isbn = reader["isbn"].ToString(),
-                        categoria = reader["categoria"].ToString(),
-                        portadaUrl = reader["portadaUrl"].ToString(),
-                        disponible = (bool)reader["disponible"]
-                    };
+                        if (reader.Read()) return Map(reader);
+                    }
                 }
             }
-            return l;
+            return null;
         }
 
-        // INSERT
-        public void Insert(Libro l)
+        // INSERT (devuelve el id generado)
+        public int Insert(Libro l)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 string query =
-                    "INSERT INTO Libro(titulo,autor,isbn,categoria,portadaUrl,disponible) VALUES(@titulo,@autor,@isbn,@categoria,@portadaUrl,@disponible)";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@titulo", l.titulo);
-                cmd.Parameters.AddWithValue("@autor", l.autor);
-                cmd.Parameters.AddWithValue("@isbn", l.isbn);
-                cmd.Parameters.AddWithValue("@categoria", l.categoria);
-                cmd.Parameters.AddWithValue("@portadaUrl", l.portadaUrl);
-                cmd.Parameters.AddWithValue("@disponible", l.disponible);
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                    "INSERT INTO Libro(titulo, autor, isbn, categoria, portadaUrl, disponible) " +
+                    "VALUES(@titulo, @autor, @isbn, @categoria, @portadaUrl, @disponible); " +
+                    "SELECT CAST(SCOPE_IDENTITY() AS int);";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    AgregarParametros(cmd, l);
+                    conn.Open();
+                    return (int)cmd.ExecuteScalar();
+                }
             }
         }
 
-        // UPDATE
-        public void Update(int id, Libro l)
+        // UPDATE (devuelve filas afectadas)
+        public int Update(int id, Libro l)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = @"UPDATE Libro
-                    SET titulo=@titulo, autor=@autor, isbn=@isbn, categoria=@categoria, portadaUrl=@portadaUrl, disponible=@disponible
-                    WHERE id=@id";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@id", id);
-                cmd.Parameters.AddWithValue("@titulo", l.titulo);
-                cmd.Parameters.AddWithValue("@autor", l.autor);
-                cmd.Parameters.AddWithValue("@isbn", l.isbn);
-                cmd.Parameters.AddWithValue("@categoria", l.categoria);
-                cmd.Parameters.AddWithValue("@portadaUrl", l.portadaUrl);
-                cmd.Parameters.AddWithValue("@disponible", l.disponible);
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                string query =
+                    "UPDATE Libro SET titulo=@titulo, autor=@autor, isbn=@isbn, " +
+                    "categoria=@categoria, portadaUrl=@portadaUrl, disponible=@disponible WHERE id=@id";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    AgregarParametros(cmd, l);
+                    conn.Open();
+                    return cmd.ExecuteNonQuery();
+                }
             }
         }
 
-        // DELETE
-        public void Delete(int id)
+        // DELETE (devuelve filas afectadas)
+        public int Delete(int id)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = "DELETE FROM Libro WHERE id=@id";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@id", id);
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                using (SqlCommand cmd = new SqlCommand("DELETE FROM Libro WHERE id=@id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    conn.Open();
+                    return cmd.ExecuteNonQuery();
+                }
             }
+        }
+
+        private static void AgregarParametros(SqlCommand cmd, Libro l)
+        {
+            cmd.Parameters.AddWithValue("@titulo", l.titulo);
+            cmd.Parameters.AddWithValue("@autor", (object)l.autor ?? System.DBNull.Value);
+            cmd.Parameters.AddWithValue("@isbn", (object)l.isbn ?? System.DBNull.Value);
+            cmd.Parameters.AddWithValue("@categoria", (object)l.categoria ?? System.DBNull.Value);
+            cmd.Parameters.AddWithValue("@portadaUrl", (object)l.portadaUrl ?? System.DBNull.Value);
+            cmd.Parameters.AddWithValue("@disponible", l.disponible);
+        }
+
+        private static Libro Map(SqlDataReader reader)
+        {
+            return new Libro
+            {
+                id = (int)reader["id"],
+                titulo = reader["titulo"].ToString(),
+                autor = reader["autor"] == System.DBNull.Value ? null : reader["autor"].ToString(),
+                isbn = reader["isbn"] == System.DBNull.Value ? null : reader["isbn"].ToString(),
+                categoria = reader["categoria"] == System.DBNull.Value ? null : reader["categoria"].ToString(),
+                portadaUrl = reader["portadaUrl"] == System.DBNull.Value ? null : reader["portadaUrl"].ToString(),
+                disponible = (bool)reader["disponible"]
+            };
         }
     }
 }

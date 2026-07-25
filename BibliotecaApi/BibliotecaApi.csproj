@@ -117,6 +117,8 @@
     <Compile Include="Data\PrestamoDAO.cs" />
     <Compile Include="Data\UsuarioDAO.cs" />
     <Compile Include="Filters\AutorizarAttribute.cs" />
+    <Compile Include="Filters\ManejadorErroresAttribute.cs" />
+    <Compile Include="Filters\ValidarModeloAttribute.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

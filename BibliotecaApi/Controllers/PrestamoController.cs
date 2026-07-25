@@ -62,6 +62,16 @@ namespace BibliotecaApi.Controllers
             }
         }
 
+        // POST api/prestamo/actualizar-vencidos -> marca vencidos los préstamos con fecha límite pasada
+        [HttpPost]
+        [Route("api/prestamo/actualizar-vencidos")]
+        [Autorizar(Roles = "Bibliotecario")]
+        public IHttpActionResult ActualizarVencidos()
+        {
+            int n = dao.MarcarVencidos();
+            return Ok(new { actualizados = n });
+        }
+
         // DELETE api/prestamo/{id} -> solo Bibliotecario
         [Autorizar(Roles = "Bibliotecario")]
         public IHttpActionResult Delete(int id)

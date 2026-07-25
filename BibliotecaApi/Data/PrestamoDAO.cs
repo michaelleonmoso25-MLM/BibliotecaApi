@@ -261,6 +261,26 @@ namespace BibliotecaApi.Data
             };
         }
 
+        /// <summary>
+        /// Marca como 'Vencido' todos los préstamos que siguen 'Activo'
+        /// y cuya fecha límite ya pasó. Devuelve cuántos se actualizaron.
+        /// Ideal para ejecutarse periódicamente (job/tarea programada).
+        /// </summary>
+        public int MarcarVencidos()
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                string query =
+                    "UPDATE Prestamo SET estado='Vencido' " +
+                    "WHERE estado='Activo' AND fechaDevolucion IS NULL AND fechaLimite < GETDATE()";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    return cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
         // ---- Consultas con datos relacionados (JOIN) ----
 
         private const string DetalleSelect =
