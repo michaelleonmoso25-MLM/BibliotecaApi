@@ -12,7 +12,7 @@ namespace BibliotecaApi
     {
         public static void Register(HttpConfiguration config)
         {
-            // Configurar CORS (única fuente; Web API maneja también el preflight OPTIONS)
+            // Configurar CORS
             var cors = new EnableCorsAttribute("*", "*", "*");
             config.EnableCors(cors);
 

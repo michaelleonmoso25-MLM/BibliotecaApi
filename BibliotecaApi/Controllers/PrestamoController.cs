@@ -1,6 +1,7 @@
 using BibliotecaApi.Data;
 using BibliotecaApi.Filters;
 using BibliotecaApi.Models;
+using BibliotecaApi.Security;
 using System.Collections.Generic;
 using System.Web.Http;
 using System.Web.Http.Cors;
@@ -13,17 +14,22 @@ namespace BibliotecaApi.Controllers
     {
         PrestamoDAO dao = new PrestamoDAO();
 
-        // GET api/prestamo -> cualquier usuario autenticado (incluye datos del libro y del usuario)
+        // Datos del token del usuario autenticado (los pone el filtro Autorizar).
+        private TokenHelper.TokenData Token => (TokenHelper.TokenData)Request.Properties["TokenData"];
+        private bool EsBibliotecario => Token.rol == "Bibliotecario";
+
+        // GET api/prestamo -> Bibliotecario ve todo; Lector solo sus propios préstamos
         public IEnumerable<PrestamoDetalle> Get()
         {
-            return dao.GetAllDetalle();
+            return EsBibliotecario ? dao.GetAllDetalle() : dao.GetDetallePorUsuario(Token.id);
         }
 
-        // GET api/prestamo/{id}
+        // GET api/prestamo/{id} -> el Lector solo puede ver un préstamo suyo
         public IHttpActionResult Get(int id)
         {
             var p = dao.GetByIdDetalle(id);
             if (p == null) return NotFound();
+            if (!EsBibliotecario && p.usuarioId != Token.id) return NotFound();
             return Ok(p);
         }
 

@@ -326,6 +326,26 @@ namespace BibliotecaApi.Data
             return null;
         }
 
+        // Solo los préstamos de un usuario (para la vista del Lector).
+        public List<PrestamoDetalle> GetDetallePorUsuario(int usuarioId)
+        {
+            List<PrestamoDetalle> lista = new List<PrestamoDetalle>();
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand(DetalleSelect + " WHERE p.usuarioId=@id ORDER BY p.id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", usuarioId);
+                    conn.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                            lista.Add(MapDetalle(reader));
+                    }
+                }
+            }
+            return lista;
+        }
+
         private static PrestamoDetalle MapDetalle(SqlDataReader reader)
         {
             var fechaLimite = (DateTime)reader["fechaLimite"];
